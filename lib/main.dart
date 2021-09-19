@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizzler_flutter/quzz_brain.dart';
 
 void main() => runApp(MainPage());
 
@@ -30,29 +31,42 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  var currentQuestion = 0;
+  QuzzBrain quzzBrain = QuzzBrain();
   List<Icon> scoreKeeper = [];
-  final answers = [false, true, true];
-
-  final questions = [
-    'You can lead a cow down stairs but not up stairs.',
-    'Approximately one quarter of human bones are in the feet.',
-    'A slug\'s blood is green.'
-  ];
 
   @override
   void initState() {
-    currentQuestion = 0;
+    quzzBrain = QuzzBrain();
     scoreKeeper = [];
     super.initState();
   }
 
   void addScoreKeeper({bool answer = false}) {
-    if (scoreKeeper.length < questions.length) {
-      setState(
-        () {
-          print(currentQuestion);
-          if (answer == answers[currentQuestion]) {
+    setState(
+      () {
+        if (quzzBrain.isFinish()) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('Finished!'),
+              content: const Text('You\'ve reached the end of the quiz.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'Cancel'),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'OK'),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+
+          quzzBrain.reset();
+          scoreKeeper = [];
+        } else {
+          if (quzzBrain.getCorrectAnswer() == answer) {
             scoreKeeper.add(
               Icon(
                 Icons.check,
@@ -67,11 +81,10 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           }
-        },
-      );
-      currentQuestion += 1;
-      currentQuestion = currentQuestion > 2 ? 0 : currentQuestion;
-    }
+          quzzBrain.nextQuestion();
+        }
+      },
+    );
   }
 
   @override
@@ -86,7 +99,7 @@ class _MyAppState extends State<MyApp> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                questions[currentQuestion],
+                quzzBrain.getQuestionTitle(),
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 25.0, color: Colors.white),
               ),
